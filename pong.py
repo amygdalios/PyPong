@@ -12,24 +12,49 @@ def main_menu():
     player1_name = ""
     player2_name = ""
     winning_score = ""
-    input_active = [False, False, False]  # Track which input is active (0: Player 1, 1: Player 2, 2: Score)
+    input_active = [False, False, False]
     font_small = pygame.font.Font(None, 50)
-
+    font_large = pygame.font.Font(None, 74)
+    
+    # Define colors
+    default_color = WHITE
+    selected_color = (255, 255, 0) 
+    hover_color = (255, 255, 200)   
+    
+    input_boxes = [
+        pygame.Rect(WIDTH // 2 - 200, HEIGHT // 3, 400, 40), 
+        pygame.Rect(WIDTH // 2 - 200, HEIGHT // 3 + 50, 400, 40), 
+        pygame.Rect(WIDTH // 2 - 200, HEIGHT // 3 + 100, 400, 40) 
+    ]
+    
     while True:
         screen.fill(BLACK)
+        
+        mouse_pos = pygame.mouse.get_pos()
+        for i, box in enumerate(input_boxes):
+            if box.collidepoint(mouse_pos):
+                if input_active[i]:
+                    text_color = selected_color
+                else:
+                    text_color = hover_color
+            else:
+                if input_active[i]:
+                    text_color = selected_color
+                else:
+                    text_color = default_color
 
-        # Display instructions
-        title_text = font.render("Pong Game", True, WHITE)
+            if i == 0:
+                player1_text = font_small.render("Player 1 Name: " + player1_name, True, text_color)
+                screen.blit(player1_text, (WIDTH // 2 - player1_text.get_width() // 2, HEIGHT // 3))
+            elif i == 1:
+                player2_text = font_small.render("Player 2 Name: " + player2_name, True, text_color)
+                screen.blit(player2_text, (WIDTH // 2 - player2_text.get_width() // 2, HEIGHT // 3 + 50))
+            elif i == 2:
+                score_text = font_small.render("Winning Score: " + winning_score, True, text_color)
+                screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 3 + 100))
+
+        title_text = font_large.render("Pong Game Setup", True, WHITE)
         screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 6))
-
-        player1_text = font_small.render("Player 1 Name: " + player1_name, True, WHITE)
-        screen.blit(player1_text, (WIDTH // 2 - player1_text.get_width() // 2, HEIGHT // 3))
-
-        player2_text = font_small.render("Player 2 Name: " + player2_name, True, WHITE)
-        screen.blit(player2_text, (WIDTH // 2 - player2_text.get_width() // 2, HEIGHT // 3 + 50))
-
-        score_text = font_small.render("Winning Score: " + winning_score, True, WHITE)
-        screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 3 + 100))
 
         start_text = font_small.render("Press ENTER to Start", True, WHITE)
         screen.blit(start_text, (WIDTH // 2 - start_text.get_width() // 2, HEIGHT // 2 + 100))
@@ -39,10 +64,10 @@ def main_menu():
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:  # Start game
+                if event.key == pygame.K_RETURN:
                     if player1_name and player2_name and winning_score.isdigit():
                         return player1_name, player2_name, int(winning_score)
-                elif event.key == pygame.K_BACKSPACE:  # Handle backspace
+                elif event.key == pygame.K_BACKSPACE:
                     if input_active[0] and len(player1_name) > 0:
                         player1_name = player1_name[:-1]
                     elif input_active[1] and len(player2_name) > 0:
@@ -50,26 +75,24 @@ def main_menu():
                     elif input_active[2] and len(winning_score) > 0:
                         winning_score = winning_score[:-1]
                 else:
-                    # Handle input for active fields
                     if input_active[0]:
                         player1_name += event.unicode
                     elif input_active[1]:
                         player2_name += event.unicode
                     elif input_active[2]:
-                        if event.unicode.isdigit():  # Only allow digits for the score
+                        if event.unicode.isdigit(): 
                             winning_score += event.unicode
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                # Detect which input field was clicked
-                if HEIGHT // 3 <= pygame.mouse.get_pos()[1] <= HEIGHT // 3 + 40:
-                    input_active = [True, False, False]  # Player 1 input active
-                elif HEIGHT // 3 + 50 <= pygame.mouse.get_pos()[1] <= HEIGHT // 3 + 90:
-                    input_active = [False, True, False]  # Player 2 input active
-                elif HEIGHT // 3 + 100 <= pygame.mouse.get_pos()[1] <= HEIGHT // 3 + 140:
-                    input_active = [False, False, True]  # Score input active
+                for i, box in enumerate(input_boxes):
+                    if box.collidepoint(event.pos):
+                        input_active = [False, False, False]
+                        input_active[i] = True  
 
         pygame.display.flip()
         clock.tick(30)
+
+
 
 pygame.init()
 
