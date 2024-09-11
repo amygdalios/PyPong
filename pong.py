@@ -1,6 +1,75 @@
 import pygame
 import sys
 
+def show_message(text, duration):
+    screen.fill(BLACK)
+    message_text = font.render(text, True, WHITE)
+    screen.blit(message_text, (WIDTH // 2 - message_text.get_width() // 2, HEIGHT // 2 - message_text.get_height() // 2))
+    pygame.display.flip()
+    pygame.time.delay(duration)
+
+def main_menu():
+    player1_name = ""
+    player2_name = ""
+    winning_score = ""
+    input_active = [False, False, False]  # Track which input is active (0: Player 1, 1: Player 2, 2: Score)
+    font_small = pygame.font.Font(None, 50)
+
+    while True:
+        screen.fill(BLACK)
+
+        # Display instructions
+        title_text = font.render("Pong Game", True, WHITE)
+        screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 6))
+
+        player1_text = font_small.render("Player 1 Name: " + player1_name, True, WHITE)
+        screen.blit(player1_text, (WIDTH // 2 - player1_text.get_width() // 2, HEIGHT // 3))
+
+        player2_text = font_small.render("Player 2 Name: " + player2_name, True, WHITE)
+        screen.blit(player2_text, (WIDTH // 2 - player2_text.get_width() // 2, HEIGHT // 3 + 50))
+
+        score_text = font_small.render("Winning Score: " + winning_score, True, WHITE)
+        screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 3 + 100))
+
+        start_text = font_small.render("Press ENTER to Start", True, WHITE)
+        screen.blit(start_text, (WIDTH // 2 - start_text.get_width() // 2, HEIGHT // 2 + 100))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:  # Start game
+                    if player1_name and player2_name and winning_score.isdigit():
+                        return player1_name, player2_name, int(winning_score)
+                elif event.key == pygame.K_BACKSPACE:  # Handle backspace
+                    if input_active[0] and len(player1_name) > 0:
+                        player1_name = player1_name[:-1]
+                    elif input_active[1] and len(player2_name) > 0:
+                        player2_name = player2_name[:-1]
+                    elif input_active[2] and len(winning_score) > 0:
+                        winning_score = winning_score[:-1]
+                else:
+                    # Handle input for active fields
+                    if input_active[0]:
+                        player1_name += event.unicode
+                    elif input_active[1]:
+                        player2_name += event.unicode
+                    elif input_active[2]:
+                        if event.unicode.isdigit():  # Only allow digits for the score
+                            winning_score += event.unicode
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Detect which input field was clicked
+                if HEIGHT // 3 <= pygame.mouse.get_pos()[1] <= HEIGHT // 3 + 40:
+                    input_active = [True, False, False]  # Player 1 input active
+                elif HEIGHT // 3 + 50 <= pygame.mouse.get_pos()[1] <= HEIGHT // 3 + 90:
+                    input_active = [False, True, False]  # Player 2 input active
+                elif HEIGHT // 3 + 100 <= pygame.mouse.get_pos()[1] <= HEIGHT // 3 + 140:
+                    input_active = [False, False, True]  # Score input active
+
+        pygame.display.flip()
+        clock.tick(30)
 
 pygame.init()
 
@@ -17,7 +86,7 @@ ball_speed_x = 7
 ball_speed_y = 7
 paddle_speed = 10
 
-# Game object dimentions
+# Game object dimensions
 ball_width = 20
 ball_height = 20
 paddle_width = 10
@@ -34,67 +103,88 @@ player1_y = HEIGHT // 2 - paddle_height // 2
 player2_x = WIDTH - paddle_width - 10
 player2_y = HEIGHT // 2 - paddle_height // 2
 
-
-#Score vars
+# Score vars
 p1_score = 0
 p2_score = 0
 
 # Font for displaying score
 font = pygame.font.Font(None, 74)
 
-
 clock = pygame.time.Clock()
 
+# Run main menu to get player names and winning score
+player1_name, player2_name, winning_score = main_menu()
+
+def reset_ball():
+    global ball_x, ball_y, ball_speed_x
+    ball_x = WIDTH // 2 - ball_width // 2
+    ball_y = HEIGHT // 2 - ball_height // 2
+    ball_speed_x *= -1
+
+def display_score_update(scorer_name):
+    show_message(f"{scorer_name} scored!", 1000)
+
 while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+    # Initial countdown
+    show_message("Game Start", 1000)
 
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_w] and player1_y > 0:
-        player1_y -= paddle_speed
-    if keys[pygame.K_s] and player1_y < HEIGHT - paddle_height:
-        player1_y += paddle_speed
-    if keys[pygame.K_UP] and player2_y > 0:
-        player2_y -= paddle_speed
-    if keys[pygame.K_DOWN] and player2_y < HEIGHT - paddle_height:
-        player2_y += paddle_speed
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
-    ball_x += ball_speed_x
-    ball_y += ball_speed_y
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w] and player1_y > 0:
+            player1_y -= paddle_speed
+        if keys[pygame.K_s] and player1_y < HEIGHT - paddle_height:
+            player1_y += paddle_speed
+        if keys[pygame.K_UP] and player2_y > 0:
+            player2_y -= paddle_speed
+        if keys[pygame.K_DOWN] and player2_y < HEIGHT - paddle_height:
+            player2_y += paddle_speed
 
-    if ball_y <= 0 or ball_y >= HEIGHT - ball_height:
-        ball_speed_y *= -1
+        ball_x += ball_speed_x
+        ball_y += ball_speed_y
 
-    if (ball_x <= player1_x + paddle_width and player1_y < ball_y < player1_y + paddle_height) or \
-       (ball_x >= player2_x - ball_width and player2_y < ball_y < player2_y + paddle_height):
-        ball_speed_x *= -1
+        if ball_y <= 0 or ball_y >= HEIGHT - ball_height:
+            ball_speed_y *= -1
 
-    if ball_x < 0:
-        p2_score += 1  # Player 2 scores a point
-        ball_x = WIDTH // 2 - ball_width // 2
-        ball_y = HEIGHT // 2 - ball_height // 2
-        ball_speed_x *= -1
-    elif ball_x > WIDTH:
-        p1_score += 1  # Player 1 scores a point
-        ball_x = WIDTH // 2 - ball_width // 2
-        ball_y = HEIGHT // 2 - ball_height // 2
-        ball_speed_x *= -1
+        if (ball_x <= player1_x + paddle_width and player1_y < ball_y < player1_y + paddle_height) or \
+           (ball_x >= player2_x - ball_width and player2_y < ball_y < player2_y + paddle_height):
+            ball_speed_x *= -1
 
-    #draw game
-    screen.fill(BLACK)
-    pygame.draw.rect(screen, WHITE, (player1_x, player1_y, paddle_width, paddle_height))
-    pygame.draw.rect(screen, WHITE, (player2_x, player2_y, paddle_width, paddle_height))
-    pygame.draw.ellipse(screen, WHITE, (ball_x, ball_y, ball_width, ball_height))
-    pygame.draw.aaline(screen, WHITE, (WIDTH // 2, 0), (WIDTH // 2, HEIGHT))
+        # Update score and reset ball
+        if ball_x < 0:
+            p2_score += 1
+            display_score_update(player2_name)
+            if p2_score >= winning_score:
+                show_message(f"{player2_name} wins!", 2000)
+                player1_name, player2_name, winning_score = main_menu()
+                p1_score, p2_score = 0, 0  # Reset scores
+            reset_ball()
 
-    # Display scores
-    player1_text = font.render(str(p1_score), True, WHITE)
-    player2_text = font.render(str(p2_score), True, WHITE)
-    screen.blit(player1_text, (WIDTH // 4, 20))    # Position for Player 1 score
-    screen.blit(player2_text, (WIDTH * 3 // 4, 20))  # Position for Player 2 score
+        elif ball_x > WIDTH:
+            p1_score += 1
+            display_score_update(player1_name)
+            if p1_score >= winning_score:
+                show_message(f"{player1_name} wins!", 2000)
+                player1_name, player2_name, winning_score = main_menu()
+                p1_score, p2_score = 0, 0  # Reset scores
+            reset_ball()
 
+        # Draw game
+        screen.fill(BLACK)
+        pygame.draw.rect(screen, WHITE, (player1_x, player1_y, paddle_width, paddle_height))
+        pygame.draw.rect(screen, WHITE, (player2_x, player2_y, paddle_width, paddle_height))
+        pygame.draw.ellipse(screen, WHITE, (ball_x, ball_y, ball_width, ball_height))
+        pygame.draw.aaline(screen, WHITE, (WIDTH // 2, 0), (WIDTH // 2, HEIGHT))
 
-    pygame.display.flip()
-    clock.tick(60)
+        # Display scores
+        player1_text = font.render(str(p1_score), True, WHITE)
+        player2_text = font.render(str(p2_score), True, WHITE)
+        screen.blit(player1_text, (WIDTH // 4, 20))  # Position for Player 1 score
+        screen.blit(player2_text, (WIDTH * 3 // 4, 20))  # Position for Player 2 score
+
+        pygame.display.flip()
+        clock.tick(60)
