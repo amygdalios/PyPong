@@ -35,6 +35,14 @@ player2_x = WIDTH - paddle_width - 10
 player2_y = HEIGHT // 2 - paddle_height // 2
 
 
+#Score vars
+p1_score = 0
+p2_score = 0
+
+# Font for displaying score
+font = pygame.font.Font(None, 74)
+
+
 clock = pygame.time.Clock()
 
 while True:
@@ -63,16 +71,30 @@ while True:
        (ball_x >= player2_x - ball_width and player2_y < ball_y < player2_y + paddle_height):
         ball_speed_x *= -1
 
-    if ball_x < 0 or ball_x > WIDTH:
+    if ball_x < 0:
+        p2_score += 1  # Player 2 scores a point
+        ball_x = WIDTH // 2 - ball_width // 2
+        ball_y = HEIGHT // 2 - ball_height // 2
+        ball_speed_x *= -1
+    elif ball_x > WIDTH:
+        p1_score += 1  # Player 1 scores a point
         ball_x = WIDTH // 2 - ball_width // 2
         ball_y = HEIGHT // 2 - ball_height // 2
         ball_speed_x *= -1
 
+    #draw game
     screen.fill(BLACK)
     pygame.draw.rect(screen, WHITE, (player1_x, player1_y, paddle_width, paddle_height))
     pygame.draw.rect(screen, WHITE, (player2_x, player2_y, paddle_width, paddle_height))
     pygame.draw.ellipse(screen, WHITE, (ball_x, ball_y, ball_width, ball_height))
     pygame.draw.aaline(screen, WHITE, (WIDTH // 2, 0), (WIDTH // 2, HEIGHT))
+
+    # Display scores
+    player1_text = font.render(str(p1_score), True, WHITE)
+    player2_text = font.render(str(p2_score), True, WHITE)
+    screen.blit(player1_text, (WIDTH // 4, 20))    # Position for Player 1 score
+    screen.blit(player2_text, (WIDTH * 3 // 4, 20))  # Position for Player 2 score
+
 
     pygame.display.flip()
     clock.tick(60)
